@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 02: LED Dimmer Circuit | FAIFA Virtual Circuit Lab</title>
+    <meta name="description" content="ทดลองปรับความสว่างของ LED ด้วยการเปลี่ยนค่าแรงดันและความต้านทาน เรียนรู้กฎของโอห์ม">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sarabun': ['Sarabun', 'sans-serif'] },
+                    colors: {
+                        navy: '#0F172A',
+                        panel: '#1E293B',
+                        primary: '#3B82F6',
+                        accent: '#F59E0B',
+                        ledOn: '#22C55E',
+                        ledOff: '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fade-in 0.5s ease-out; }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+            transition: background 0.3s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid #0F172A;
+            transition: transform 0.2s;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        #voltage-slider::-webkit-slider-thumb { background: #3B82F6; }
+        #voltage-slider { background: linear-gradient(to right, #1E293B, #3B82F6); }
+        #resistance-slider::-webkit-slider-thumb { background: #F59E0B; }
+        #resistance-slider { background: linear-gradient(to right, #1E293B, #F59E0B); }
+        .led-indicator {
+            transition: all 0.3s ease;
+        }
+        .warning-box {
+            animation: fade-in 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-navy min-h-screen text-[#F1F5F9]">
+
+    <!-- HEADER -->
+    <header class="px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
+        <a href="index.html" class="flex items-center gap-2 text-[#94A3B8] hover:text-white transition-colors">
+            <span class="text-xl">←</span>
+            <span class="font-semibold">กลับหน้าหลัก</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-2">
+            <span class="text-xl">⚡</span>
+            <span class="text-xl font-bold text-primary">FAIFA</span>
+        </a>
+    </header>
+
+    <!-- TITLE -->
+    <div class="text-center px-4 pt-4 pb-8">
+        <div class="flex items-center justify-center gap-3 mb-2">
+            <span class="bg-primary text-white text-sm font-semibold px-3 py-1 rounded-full">Lab 02</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">การปรับความสว่างของ LED</h1>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 pb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- LEFT: CIRCUIT PANEL -->
+            <div class="bg-panel rounded-2xl p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="text-primary">🔌</span> แผงวงจร
+                </h2>
+
+                <!-- SVG Circuit -->
+                <div class="flex justify-center mb-6">
+                    <svg id="circuit-svg" width="400" height="300" viewBox="0 0 400 300" class="max-w-full h-auto">
+                        <defs>
+                            <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+                                <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Battery -->
+                        <rect x="40" y="100" width="40" height="80" rx="6" fill="none" stroke="#94A3B8" stroke-width="2"/>
+                        <line x1="50" y1="125" x2="70" y2="125" stroke="#F1F5F9" stroke-width="2"/>
+                        <line x1="60" y1="115" x2="60" y2="135" stroke="#F1F5F9" stroke-width="2"/>
+                        <line x1="50" y1="155" x2="70" y2="155" stroke="#F1F5F9" stroke-width="2"/>
+                        <text id="battery-label" x="60" y="95" text-anchor="middle" fill="#3B82F6" font-size="13" font-weight="600" font-family="Sarabun">6.0V</text>
+
+                        <!-- Top wire: Battery to Resistor (always connected) -->
+                        <line x1="80" y1="120" x2="200" y2="120" stroke="#3B82F6" stroke-width="2.5"/>
+
+                        <!-- Resistor -->
+                        <rect x="200" y="108" width="70" height="24" rx="4" fill="none" stroke="#F59E0B" stroke-width="2"/>
+                        <text id="resistor-label" x="235" y="124" text-anchor="middle" fill="#F59E0B" font-size="11" font-weight="600" font-family="Sarabun">470Ω</text>
+
+                        <!-- Wire: Resistor to LED -->
+                        <line x1="270" y1="120" x2="330" y2="120" stroke="#3B82F6" stroke-width="2.5"/>
+                        <line x1="330" y1="120" x2="330" y2="170" stroke="#3B82F6" stroke-width="2.5"/>
+
+                        <!-- LED -->
+                        <circle id="led-circle" cx="330" cy="195" r="22" fill="#22C55E" stroke="#22C55E" stroke-width="2" filter="url(#glow-green)" opacity="0.5"/>
+                        <text x="330" y="200" text-anchor="middle" fill="#0F172A" font-size="12" font-weight="700" font-family="Sarabun">LED</text>
+
+                        <!-- Bottom wire -->
+                        <line x1="330" y1="217" x2="330" y2="240" stroke="#3B82F6" stroke-width="2.5"/>
+                        <line x1="330" y1="240" x2="60" y2="240" stroke="#3B82F6" stroke-width="2.5"/>
+                        <line x1="60" y1="240" x2="60" y2="180" stroke="#3B82F6" stroke-width="2.5"/>
+
+                        <!-- Direction arrows -->
+                        <polygon points="155,115 165,120 155,125" fill="#3B82F6" opacity="0.7"/>
+                        <polygon points="195,235 185,240 195,245" fill="#3B82F6" opacity="0.7"/>
+                    </svg>
+                </div>
+
+                <!-- LED Indicator Large -->
+                <div class="flex justify-center mb-4">
+                    <div class="text-center">
+                        <div id="led-big" class="led-indicator w-24 h-24 rounded-full mx-auto mb-3 flex items-center justify-center text-2xl font-bold"
+                             style="background: #22C55E; box-shadow: 0 0 20px #22C55E, 0 0 40px rgba(34,197,94,0.3); opacity: 0.5;">
+                            LED
+                        </div>
+                        <p class="text-[#94A3B8] text-sm">ความสว่างปัจจุบัน</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: CONTROL PANEL -->
+            <div class="bg-panel rounded-2xl p-6 flex flex-col gap-6">
+                <h2 class="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+                    <span class="text-accent">🎛️</span> แผงควบคุม
+                </h2>
+
+                <!-- Slider 1: Voltage -->
+                <div class="bg-navy rounded-xl p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[#F1F5F9] font-semibold">⚡ แรงดันไฟฟ้า (V)</label>
+                        <span id="voltage-value" class="text-primary text-2xl font-bold">6.0 V</span>
+                    </div>
+                    <input type="range" id="voltage-slider" min="1" max="12" step="0.5" value="6" class="w-full cursor-pointer">
+                    <div class="flex justify-between text-xs text-[#94A3B8] mt-1">
+                        <span>1 V</span>
+                        <span>12 V</span>
+                    </div>
+                </div>
+
+                <!-- Slider 2: Resistance -->
+                <div class="bg-navy rounded-xl p-5">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="text-[#F1F5F9] font-semibold">🔧 ความต้านทาน (R)</label>
+                        <span id="resistance-value" class="text-accent text-2xl font-bold">470 Ω</span>
+                    </div>
+                    <input type="range" id="resistance-slider" min="100" max="2000" step="10" value="470" class="w-full cursor-pointer">
+                    <div class="flex justify-between text-xs text-[#94A3B8] mt-1">
+                        <span>100 Ω</span>
+                        <span>2000 Ω</span>
+                    </div>
+                </div>
+
+                <!-- Result -->
+                <div class="bg-navy rounded-xl p-6 text-center">
+                    <div class="text-[#94A3B8] text-sm mb-2">กระแสไฟฟ้า (I = V / R)</div>
+                    <div id="current-display" class="text-4xl md:text-5xl font-bold text-ledOn mb-1">12.8 mA</div>
+                    <div id="current-formula" class="text-[#94A3B8] text-sm">I = 6.0 / 470 × 1000 = 12.8 mA</div>
+                </div>
+
+                <!-- Warning -->
+                <div id="warning-box" class="hidden warning-box bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                    <span class="text-red-400 font-semibold text-lg">⚠️ กระแสสูงเกินไป! LED อาจเสียหาย</span>
+                    <p class="text-red-400/70 text-sm mt-1">กระแสเกิน 30 mA อาจทำให้ LED ไหม้ได้</p>
+                </div>
+
+                <!-- Quiz -->
+                <div class="bg-navy rounded-xl p-5">
+                    <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
+                        <span class="text-accent">📝</span> แบบทดสอบ
+                    </h3>
+                    <p class="text-[#F1F5F9] font-semibold mb-4">
+                        ถ้าเพิ่มค่าความต้านทาน (R) ขึ้น แต่แรงดัน (V) คงที่ กระแสไฟฟ้าจะเป็นอย่างไร?
+                    </p>
+                    <div class="flex flex-col gap-3 mb-4">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="quiz2" value="a" class="accent-primary w-4 h-4">
+                            <span class="text-[#94A3B8] group-hover:text-white transition-colors">ก. กระแสเพิ่มขึ้น</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="quiz2" value="b" class="accent-primary w-4 h-4">
+                            <span class="text-[#94A3B8] group-hover:text-white transition-colors">ข. กระแสลดลง</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="radio" name="quiz2" value="c" class="accent-primary w-4 h-4">
+                            <span class="text-[#94A3B8] group-hover:text-white transition-colors">ค. กระแสไม่เปลี่ยนแปลง</span>
+                        </label>
+                    </div>
+                    <button onclick="checkQuiz()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-colors">
+                        ตรวจคำตอบ
+                    </button>
+                    <div id="quiz-feedback" class="mt-3 text-center font-semibold hidden"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-[#94A3B8] text-sm py-8 border-t border-panel">
+        © 2026 FAIFA Engineer Team
+    </footer>
+
+    <script>
+        const voltageSlider = document.getElementById('voltage-slider');
+        const resistanceSlider = document.getElementById('resistance-slider');
+        const voltageValue = document.getElementById('voltage-value');
+        const resistanceValue = document.getElementById('resistance-value');
+        const currentDisplay = document.getElementById('current-display');
+        const currentFormula = document.getElementById('current-formula');
+        const warningBox = document.getElementById('warning-box');
+        const ledCircle = document.getElementById('led-circle');
+        const ledBig = document.getElementById('led-big');
+        const batteryLabel = document.getElementById('battery-label');
+        const resistorLabel = document.getElementById('resistor-label');
+
+        function updateCircuit() {
+            const V = parseFloat(voltageSlider.value);
+            const R = parseFloat(resistanceSlider.value);
+            const I = (V / R) * 1000; // mA
+
+            // Update display values
+            voltageValue.textContent = V.toFixed(1) + ' V';
+            resistanceValue.textContent = R + ' Ω';
+            currentDisplay.textContent = I.toFixed(1) + ' mA';
+            currentFormula.textContent = 'I = ' + V.toFixed(1) + ' / ' + R + ' × 1000 = ' + I.toFixed(1) + ' mA';
+
+            // Update SVG labels
+            batteryLabel.textContent = V.toFixed(1) + 'V';
+            resistorLabel.textContent = R + 'Ω';
+
+            // Calculate brightness (0.1 to 1.0)
+            const maxCurrent = 120; // max possible mA (12/100)
+            const brightness = Math.min(Math.max(I / maxCurrent, 0.1), 1.0);
+            const glowRadius = brightness * 20;
+
+            // Update SVG LED
+            ledCircle.setAttribute('opacity', brightness.toString());
+            ledCircle.style.filter = 'drop-shadow(0 0 ' + glowRadius + 'px #22C55E)';
+
+            // Update big LED indicator
+            ledBig.style.opacity = brightness.toString();
+            ledBig.style.boxShadow = '0 0 ' + (glowRadius * 2) + 'px #22C55E, 0 0 ' + (glowRadius * 4) + 'px rgba(34,197,94,' + (brightness * 0.5) + ')';
+
+            // Warning
+            if (I > 30) {
+                warningBox.classList.remove('hidden');
+            } else {
+                warningBox.classList.add('hidden');
+            }
+        }
+
+        voltageSlider.addEventListener('input', updateCircuit);
+        resistanceSlider.addEventListener('input', updateCircuit);
+
+        // Initial calculation
+        updateCircuit();
+
+        function checkQuiz() {
+            const selected = document.querySelector('input[name="quiz2"]:checked');
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (!selected) {
+                feedback.textContent = '⚠️ กรุณาเลือกคำตอบก่อน';
+                feedback.className = 'mt-3 text-center font-semibold text-accent';
+                return;
+            }
+
+            if (selected.value === 'b') {
+                feedback.textContent = '✅ ถูกต้อง! ตามสูตร I = V/R เมื่อ R เพิ่มขึ้น กระแส I จะลดลง';
+                feedback.className = 'mt-3 text-center font-semibold text-ledOn';
+                localStorage.setItem('lab2', 'true');
+            } else {
+                feedback.textContent = '❌ ไม่ถูกต้อง ลองคิดจากสูตร I = V/R เมื่อ R เพิ่ม จะเกิดอะไรขึ้น?';
+                feedback.className = 'mt-3 text-center font-semibold text-red-400';
+            }
+        }
+    </script>
+
+</body>
+</html>

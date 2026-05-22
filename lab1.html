@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab 01: วงจร LED เปิด-ปิด | FAIFA Virtual Circuit Lab</title>
+    <meta name="description" content="ทดลองต่อวงจร LED แบบเปิด-ปิด เรียนรู้การทำงานของสวิตช์ แบตเตอรี่ ตัวต้านทาน และ LED">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 'sarabun': ['Sarabun', 'sans-serif'] },
+                    colors: {
+                        navy: '#0F172A',
+                        panel: '#1E293B',
+                        primary: '#3B82F6',
+                        accent: '#F59E0B',
+                        ledOn: '#22C55E',
+                        ledOff: '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+        @keyframes led-glow {
+            0%, 100% { filter: drop-shadow(0 0 8px #22C55E) drop-shadow(0 0 16px #22C55E); }
+            50% { filter: drop-shadow(0 0 14px #22C55E) drop-shadow(0 0 28px #22C55E); }
+        }
+        .led-on { animation: led-glow 1.5s ease-in-out infinite; }
+        @keyframes wire-flow {
+            0% { stroke-dashoffset: 20; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .wire-animated {
+            stroke-dasharray: 10 5;
+            animation: wire-flow 0.8s linear infinite;
+        }
+        @keyframes fade-in {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fade-in 0.5s ease-out; }
+        .switch-btn {
+            transition: all 0.3s ease;
+        }
+        .switch-btn:hover {
+            transform: scale(1.05);
+        }
+        .switch-btn:active {
+            transform: scale(0.97);
+        }
+        .quiz-section {
+            animation: fade-in 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-navy min-h-screen text-[#F1F5F9]">
+
+    <!-- HEADER -->
+    <header class="px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
+        <a href="index.html" class="flex items-center gap-2 text-[#94A3B8] hover:text-white transition-colors">
+            <span class="text-xl">←</span>
+            <span class="font-semibold">กลับหน้าหลัก</span>
+        </a>
+        <a href="index.html" class="flex items-center gap-2">
+            <span class="text-xl">⚡</span>
+            <span class="text-xl font-bold text-primary">FAIFA</span>
+        </a>
+    </header>
+
+    <!-- TITLE -->
+    <div class="text-center px-4 pt-4 pb-8">
+        <div class="flex items-center justify-center gap-3 mb-2">
+            <span class="bg-primary text-white text-sm font-semibold px-3 py-1 rounded-full">Lab 01</span>
+        </div>
+        <h1 class="text-2xl md:text-3xl font-bold text-white">วงจร LED แบบเปิด-ปิด</h1>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-7xl mx-auto px-4 pb-16">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <!-- LEFT: CIRCUIT PANEL -->
+            <div class="bg-panel rounded-2xl p-6">
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="text-primary">🔌</span> แผงวงจร
+                </h2>
+
+                <!-- SVG Circuit -->
+                <div class="flex justify-center mb-6">
+                    <svg id="circuit-svg" width="400" height="300" viewBox="0 0 400 300" class="max-w-full h-auto">
+                        <defs>
+                            <filter id="glow-green">
+                                <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- Battery -->
+                        <rect x="40" y="100" width="40" height="80" rx="6" fill="none" stroke="#94A3B8" stroke-width="2"/>
+                        <line x1="50" y1="125" x2="70" y2="125" stroke="#F1F5F9" stroke-width="2"/>
+                        <line x1="60" y1="115" x2="60" y2="135" stroke="#F1F5F9" stroke-width="2"/>
+                        <line x1="50" y1="155" x2="70" y2="155" stroke="#F1F5F9" stroke-width="2"/>
+                        <text x="60" y="95" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Sarabun">9V</text>
+
+                        <!-- Top wire: Battery to Switch -->
+                        <line id="wire-top-1" x1="80" y1="120" x2="140" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+                        <!-- Switch -->
+                        <circle cx="140" cy="120" r="4" fill="#94A3B8" id="switch-pivot"/>
+                        <line id="switch-arm" x1="140" y1="120" x2="180" y2="100" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+                        <circle cx="190" cy="120" r="4" fill="#94A3B8" id="switch-contact"/>
+
+                        <!-- Top wire: Switch to Resistor -->
+                        <line id="wire-top-2" x1="190" y1="120" x2="250" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+                        <!-- Resistor -->
+                        <rect x="250" y="108" width="60" height="24" rx="4" fill="none" stroke="#F59E0B" stroke-width="2"/>
+                        <text x="280" y="124" text-anchor="middle" fill="#F59E0B" font-size="11" font-family="Sarabun">470Ω</text>
+
+                        <!-- Right wire: Resistor to LED -->
+                        <line id="wire-right" x1="310" y1="120" x2="340" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <line id="wire-right-down" x1="340" y1="120" x2="340" y2="180" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+                        <!-- LED -->
+                        <circle id="led-circle" cx="340" cy="200" r="18" fill="#374151" stroke="#4B5563" stroke-width="2"/>
+                        <text x="340" y="205" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="600" font-family="Sarabun" id="led-text">LED</text>
+
+                        <!-- Bottom wire: LED to Battery -->
+                        <line id="wire-bottom-1" x1="340" y1="218" x2="340" y2="240" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <line id="wire-bottom-2" x1="340" y1="240" x2="60" y2="240" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <line id="wire-left" x1="60" y1="240" x2="60" y2="180" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+
+                        <!-- Labels -->
+                        <text x="160" y="90" text-anchor="middle" fill="#94A3B8" font-size="11" font-family="Sarabun" id="switch-label">Switch (เปิด)</text>
+                    </svg>
+                </div>
+
+                <!-- Switch Button -->
+                <div class="flex justify-center">
+                    <button id="switch-btn" onclick="toggleSwitch()" class="switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOff">
+                        🔴 ปิดวงจร (OFF)
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT: INFO PANEL -->
+            <div class="bg-panel rounded-2xl p-6 flex flex-col gap-6">
+
+                <!-- Section 1: Current Values -->
+                <div>
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span class="text-accent">📊</span> ค่าวงจรปัจจุบัน
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-navy rounded-xl p-4 text-center">
+                            <div class="text-[#94A3B8] text-sm mb-1">แรงดัน (V)</div>
+                            <div class="text-primary text-2xl font-bold">9 V</div>
+                        </div>
+                        <div class="bg-navy rounded-xl p-4 text-center">
+                            <div class="text-[#94A3B8] text-sm mb-1">ความต้านทาน (R)</div>
+                            <div class="text-accent text-2xl font-bold">470 Ω</div>
+                        </div>
+                        <div class="bg-navy rounded-xl p-4 text-center">
+                            <div class="text-[#94A3B8] text-sm mb-1">กระแสไฟฟ้า (I)</div>
+                            <div class="text-ledOn text-2xl font-bold" id="current-display">0 mA</div>
+                        </div>
+                        <div class="bg-navy rounded-xl p-4 text-center">
+                            <div class="text-[#94A3B8] text-sm mb-1">สถานะ LED</div>
+                            <div id="led-status">
+                                <span class="inline-block bg-ledOff text-[#94A3B8] text-sm font-semibold px-3 py-1 rounded-full">● ดับ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Theory -->
+                <div>
+                    <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                        <span class="text-primary">📖</span> หลักการทำงาน
+                    </h2>
+                    <p class="text-[#94A3B8] text-sm leading-relaxed mb-4">
+                        วงจรไฟฟ้าประกอบด้วยแหล่งจ่ายไฟ (แบตเตอรี่) สายไฟ สวิตช์ ตัวต้านทาน และ LED
+                        เมื่อสวิตช์ปิดวงจร กระแสไฟฟ้าจะไหลผ่านตัวต้านทานไปยัง LED ทำให้ LED สว่างขึ้น
+                        ตัวต้านทานทำหน้าที่จำกัดกระแสไฟฟ้า เพื่อป้องกัน LED เสียหาย
+                        กระแสที่ไหลคำนวณได้จากกฎของโอห์ม
+                    </p>
+                    <div class="bg-navy border-2 border-primary rounded-xl py-4 px-6 text-center">
+                        <span class="text-blue-400 text-2xl font-bold">V = I × R</span>
+                        <div class="text-[#94A3B8] text-xs mt-1">I = V / R = 9 / 470 = 19.1 mA</div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Quiz (hidden initially) -->
+                <div id="quiz-section" class="hidden quiz-section">
+                    <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                        <span class="text-accent">📝</span> แบบทดสอบ
+                    </h2>
+                    <div class="bg-navy rounded-xl p-4">
+                        <p class="text-[#F1F5F9] font-semibold mb-4">
+                            เมื่อ Switch เปิดวงจร (ไม่มีกระแสไหล) กระแสไฟฟ้าจะเป็นอย่างไร?
+                        </p>
+                        <div class="flex flex-col gap-3 mb-4">
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="radio" name="quiz1" value="a" class="accent-primary w-4 h-4">
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ก. กระแสไหลได้ปกติ</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="radio" name="quiz1" value="b" class="accent-primary w-4 h-4">
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ข. กระแสเป็น 0 (ไม่ไหล)</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer group">
+                                <input type="radio" name="quiz1" value="c" class="accent-primary w-4 h-4">
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ค. กระแสเพิ่มขึ้นเป็น 2 เท่า</span>
+                            </label>
+                        </div>
+                        <button onclick="checkQuiz()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-colors">
+                            ตรวจคำตอบ
+                        </button>
+                        <div id="quiz-feedback" class="mt-3 text-center font-semibold hidden"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-[#94A3B8] text-sm py-8 border-t border-panel">
+        © 2026 FAIFA Engineer Team
+    </footer>
+
+    <script>
+        let isOn = false;
+        let hasToggled = false;
+
+        function toggleSwitch() {
+            isOn = !isOn;
+            hasToggled = true;
+
+            const btn = document.getElementById('switch-btn');
+            const led = document.getElementById('led-circle');
+            const ledText = document.getElementById('led-text');
+            const switchArm = document.getElementById('switch-arm');
+            const switchLabel = document.getElementById('switch-label');
+            const currentDisplay = document.getElementById('current-display');
+            const ledStatus = document.getElementById('led-status');
+
+            // Wire IDs
+            const wireIds = ['wire-top-1', 'wire-top-2', 'wire-right', 'wire-right-down', 'wire-bottom-1', 'wire-bottom-2', 'wire-left'];
+
+            if (isOn) {
+                // ON state
+                btn.className = 'switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOn';
+                btn.textContent = '🟢 เปิดวงจร (ON)';
+
+                // Switch arm closed
+                switchArm.setAttribute('x2', '190');
+                switchArm.setAttribute('y2', '120');
+                switchArm.setAttribute('stroke', '#3B82F6');
+                switchLabel.textContent = 'Switch (ปิด)';
+
+                // Wires turn solid blue animated
+                wireIds.forEach(function(id) {
+                    const wire = document.getElementById(id);
+                    wire.setAttribute('stroke', '#3B82F6');
+                    wire.setAttribute('stroke-dasharray', '10 5');
+                    wire.classList.add('wire-animated');
+                });
+
+                // LED on
+                led.setAttribute('fill', '#22C55E');
+                led.setAttribute('stroke', '#22C55E');
+                led.setAttribute('filter', 'url(#glow-green)');
+                led.classList.add('led-on');
+                ledText.setAttribute('fill', '#0F172A');
+
+                // Info
+                currentDisplay.textContent = '19.1 mA';
+                currentDisplay.className = 'text-ledOn text-2xl font-bold';
+                ledStatus.innerHTML = '<span class="inline-block bg-ledOn/20 text-ledOn text-sm font-semibold px-3 py-1 rounded-full">● ติด</span>';
+
+            } else {
+                // OFF state
+                btn.className = 'switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOff';
+                btn.textContent = '🔴 ปิดวงจร (OFF)';
+
+                // Switch arm open
+                switchArm.setAttribute('x2', '180');
+                switchArm.setAttribute('y2', '100');
+                switchArm.setAttribute('stroke', '#94A3B8');
+                switchLabel.textContent = 'Switch (เปิด)';
+
+                // Wires turn dashed gray
+                wireIds.forEach(function(id) {
+                    const wire = document.getElementById(id);
+                    wire.setAttribute('stroke', '#4B5563');
+                    wire.setAttribute('stroke-dasharray', '6 4');
+                    wire.classList.remove('wire-animated');
+                });
+
+                // LED off
+                led.setAttribute('fill', '#374151');
+                led.setAttribute('stroke', '#4B5563');
+                led.removeAttribute('filter');
+                led.classList.remove('led-on');
+                ledText.setAttribute('fill', '#94A3B8');
+
+                // Info
+                currentDisplay.textContent = '0 mA';
+                currentDisplay.className = 'text-[#94A3B8] text-2xl font-bold';
+                ledStatus.innerHTML = '<span class="inline-block bg-ledOff text-[#94A3B8] text-sm font-semibold px-3 py-1 rounded-full">● ดับ</span>';
+            }
+
+            // Show quiz after first toggle
+            if (hasToggled) {
+                document.getElementById('quiz-section').classList.remove('hidden');
+            }
+        }
+
+        function checkQuiz() {
+            const selected = document.querySelector('input[name="quiz1"]:checked');
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (!selected) {
+                feedback.textContent = '⚠️ กรุณาเลือกคำตอบก่อน';
+                feedback.className = 'mt-3 text-center font-semibold text-accent';
+                return;
+            }
+
+            if (selected.value === 'b') {
+                feedback.textContent = '✅ ถูกต้อง! เมื่อวงจรเปิด กระแสไฟฟ้าจะไม่สามารถไหลได้ จึงเป็น 0';
+                feedback.className = 'mt-3 text-center font-semibold text-ledOn';
+                localStorage.setItem('lab1', 'true');
+            } else {
+                feedback.textContent = '❌ ไม่ถูกต้อง ลองคิดอีกครั้ง — เมื่อวงจรขาด กระแสจะเป็นอย่างไร?';
+                feedback.className = 'mt-3 text-center font-semibold text-red-400';
+            }
+        }
+    </script>
+
+</body>
+</html>
