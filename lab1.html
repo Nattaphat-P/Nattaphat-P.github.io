@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab 01: วงจร LED เปิด-ปิด | FAIFA Virtual Circuit Lab</title>
-    <meta name="description" content="ทดลองต่อวงจร LED แบบเปิด-ปิด เรียนรู้การทำงานของสวิตช์ แบตเตอรี่ ตัวต้านทาน และ LED">
+    <meta name="description"
+        content="ทดลองต่อวงจร LED แบบ Drag & Drop ลากอุปกรณ์ไปวางในวงจร เรียนรู้การทำงานของสวิตช์ แบตเตอรี่ ตัวต้านทาน และ LED">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -25,40 +27,214 @@
         }
     </script>
     <style>
-        body { font-family: 'Sarabun', sans-serif; }
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+
         @keyframes led-glow {
-            0%, 100% { filter: drop-shadow(0 0 8px #22C55E) drop-shadow(0 0 16px #22C55E); }
-            50% { filter: drop-shadow(0 0 14px #22C55E) drop-shadow(0 0 28px #22C55E); }
+
+            0%,
+            100% {
+                filter: drop-shadow(0 0 8px #22C55E) drop-shadow(0 0 16px #22C55E);
+            }
+
+            50% {
+                filter: drop-shadow(0 0 14px #22C55E) drop-shadow(0 0 28px #22C55E);
+            }
         }
-        .led-on { animation: led-glow 1.5s ease-in-out infinite; }
+
+        .led-on {
+            animation: led-glow 1.5s ease-in-out infinite;
+        }
+
         @keyframes wire-flow {
-            0% { stroke-dashoffset: 20; }
-            100% { stroke-dashoffset: 0; }
+            0% {
+                stroke-dashoffset: 15;
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+            }
         }
+
+        /* Each wire gets its own smooth speed proportional to its visual length */
         .wire-animated {
             stroke-dasharray: 10 5;
-            animation: wire-flow 0.8s linear infinite;
+            /* pattern total = 15px */
+            animation: wire-flow 0.5s linear infinite;
         }
+
+        /* Long wires: faster so they feel same speed as short ones */
+        #wire-5.wire-animated {
+            animation-duration: 1.6s;
+        }
+
+        /* 320px long */
+        #wire-6.wire-animated {
+            animation-duration: 0.8s;
+        }
+
+        /* 150px long */
+        #wire-3.wire-animated {
+            animation-duration: 0.5s;
+        }
+
+        /* 90px long  */
+        #wire-4.wire-animated {
+            animation-duration: 0.25s;
+        }
+
+        /* 32px long  */
+        #wire-1.wire-animated {
+            animation-duration: 0.3s;
+        }
+
+        /* 45px long  */
+        #wire-2.wire-animated {
+            animation-duration: 0.15s;
+        }
+
+        /* 20px long  */
+
         @keyframes fade-in {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        .fade-in { animation: fade-in 0.5s ease-out; }
+
+        .fade-in {
+            animation: fade-in 0.5s ease-out;
+        }
+
         .switch-btn {
             transition: all 0.3s ease;
         }
+
         .switch-btn:hover {
             transform: scale(1.05);
         }
+
         .switch-btn:active {
             transform: scale(0.97);
         }
+
         .quiz-section {
             animation: fade-in 0.6s ease-out;
         }
+
+        /* Drop zone styles */
+        .drop-zone {
+            transition: fill 0.2s ease, stroke 0.2s ease;
+        }
+
+
+        /* Component card drag styles */
+        .comp-card {
+            transition: all 0.3s ease;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .comp-card:hover {
+            border-color: #3B82F6 !important;
+        }
+
+        .comp-card:active {
+            cursor: grabbing;
+        }
+
+        .comp-card.used {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Toast notification */
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease, fadeOut 0.5s ease 2s forwards;
+            max-width: 340px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+            }
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-6px);
+            }
+
+            75% {
+                transform: translateX(6px);
+            }
+        }
+
+        /* Progress bar */
+        .progress-fill {
+            transition: width 0.5s ease;
+        }
+
+        /* Touch drag ghost */
+        .touch-ghost {
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0.85;
+            transform: translate(-50%, -50%) scale(1.1);
+        }
     </style>
 </head>
+
 <body class="bg-navy min-h-screen text-[#F1F5F9]">
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
 
     <!-- HEADER -->
     <header class="px-6 py-4 flex items-center justify-between max-w-7xl mx-auto">
@@ -84,78 +260,203 @@
     <main class="max-w-7xl mx-auto px-4 pb-16">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <!-- LEFT: CIRCUIT PANEL -->
+            <!-- LEFT: CIRCUIT BOARD -->
             <div class="bg-panel rounded-2xl p-6">
                 <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                     <span class="text-primary">🔌</span> แผงวงจร
                 </h2>
 
-                <!-- SVG Circuit -->
+                <!-- SVG Circuit with Drop Zones -->
                 <div class="flex justify-center mb-6">
-                    <svg id="circuit-svg" width="400" height="300" viewBox="0 0 400 300" class="max-w-full h-auto">
+                    <svg id="circuit-svg" width="420" height="320" viewBox="0 0 420 320" class="max-w-full h-auto">
                         <defs>
                             <filter id="glow-green">
-                                <feGaussianBlur stdDeviation="6" result="coloredBlur"/>
+                                <feGaussianBlur stdDeviation="6" result="coloredBlur" />
                                 <feMerge>
-                                    <feMergeNode in="coloredBlur"/>
-                                    <feMergeNode in="SourceGraphic"/>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
                                 </feMerge>
                             </filter>
                         </defs>
 
-                        <!-- Battery -->
-                        <rect x="40" y="100" width="40" height="80" rx="6" fill="none" stroke="#94A3B8" stroke-width="2"/>
-                        <line x1="50" y1="125" x2="70" y2="125" stroke="#F1F5F9" stroke-width="2"/>
-                        <line x1="60" y1="115" x2="60" y2="135" stroke="#F1F5F9" stroke-width="2"/>
-                        <line x1="50" y1="155" x2="70" y2="155" stroke="#F1F5F9" stroke-width="2"/>
-                        <text x="60" y="95" text-anchor="middle" fill="#94A3B8" font-size="12" font-family="Sarabun">9V</text>
+                        <!-- Wires (always visible, gray when inactive) -->
+                        <!-- Top: Battery → Switch -->
+                        <line id="wire-1" x1="95" y1="80" x2="140" y2="80" stroke="#4B5563" stroke-width="2.5" />
+                        <!-- Top: Switch → Resistor -->
+                        <line id="wire-2" x1="250" y1="80" x2="270" y2="80" stroke="#4B5563" stroke-width="2.5" />
+                        <!-- Right: Resistor → LED -->
+                        <line id="wire-3" x1="370" y1="80" x2="370" y2="170" stroke="#4B5563" stroke-width="2.5" />
+                        <!-- Bottom wire: LED → Battery -->
+                        <line id="wire-4" x1="370" y1="248" x2="370" y2="280" stroke="#4B5563" stroke-width="2.5" />
+                        <line id="wire-5" x1="370" y1="280" x2="50" y2="280" stroke="#4B5563" stroke-width="2.5" />
+                        <line id="wire-6" x1="50" y1="280" x2="50" y2="130" stroke="#4B5563" stroke-width="2.5" />
 
-                        <!-- Top wire: Battery to Switch -->
-                        <line id="wire-top-1" x1="80" y1="120" x2="140" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <!-- Drop Zone 1: Battery (left) -->
+                        <rect id="zone-battery" class="drop-zone" x="15" y="40" width="80" height="90" rx="12"
+                            fill="rgba(59,130,246,0.06)" stroke="#60A5FA" stroke-width="2.5" stroke-dasharray="6 4"
+                            stroke-linecap="round" pathLength="200" />
+                        <text id="zone-battery-label" x="55" y="90" text-anchor="middle" fill="#94A3B8" font-size="11"
+                            font-family="Sarabun">แหล่งจ่ายไฟ</text>
 
-                        <!-- Switch -->
-                        <circle cx="140" cy="120" r="4" fill="#94A3B8" id="switch-pivot"/>
-                        <line id="switch-arm" x1="140" y1="120" x2="180" y2="100" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
-                        <circle cx="190" cy="120" r="4" fill="#94A3B8" id="switch-contact"/>
+                        <!-- Drop Zone 2: Switch (top center) -->
+                        <rect id="zone-switch" class="drop-zone" x="140" y="40" width="110" height="80" rx="12"
+                            fill="rgba(59,130,246,0.06)" stroke="#60A5FA" stroke-width="2.5" stroke-dasharray="6 4"
+                            stroke-linecap="round" pathLength="200" />
+                        <text id="zone-switch-label" x="195" y="85" text-anchor="middle" fill="#94A3B8" font-size="11"
+                            font-family="Sarabun">สวิตช์</text>
 
-                        <!-- Top wire: Switch to Resistor -->
-                        <line id="wire-top-2" x1="190" y1="120" x2="250" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <!-- Drop Zone 3: Resistor (right top) -->
+                        <rect id="zone-resistor" class="drop-zone" x="270" y="45" width="100" height="70" rx="12"
+                            fill="rgba(59,130,246,0.06)" stroke="#60A5FA" stroke-width="2.5" stroke-dasharray="6 4"
+                            stroke-linecap="round" pathLength="200" />
+                        <text id="zone-resistor-label" x="320" y="85" text-anchor="middle" fill="#94A3B8" font-size="11"
+                            font-family="Sarabun">ตัวต้านทาน</text>
 
-                        <!-- Resistor -->
-                        <rect x="250" y="108" width="60" height="24" rx="4" fill="none" stroke="#F59E0B" stroke-width="2"/>
-                        <text x="280" y="124" text-anchor="middle" fill="#F59E0B" font-size="11" font-family="Sarabun">470Ω</text>
+                        <!-- Drop Zone 4: LED (right bottom) -->
+                        <rect id="zone-led" class="drop-zone" x="320" y="170" width="82" height="78" rx="12"
+                            fill="rgba(59,130,246,0.06)" stroke="#60A5FA" stroke-width="2.5" stroke-dasharray="6 4"
+                            stroke-linecap="round" pathLength="200" />
+                        <text id="zone-led-label" x="361" y="215" text-anchor="middle" fill="#94A3B8" font-size="11"
+                            font-family="Sarabun">LED</text>
 
-                        <!-- Right wire: Resistor to LED -->
-                        <line id="wire-right" x1="310" y1="120" x2="340" y2="120" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
-                        <line id="wire-right-down" x1="340" y1="120" x2="340" y2="180" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <!-- Placed component graphics (hidden until placed) -->
+                        <!-- Battery graphic -->
+                        <g id="placed-battery" class="hidden">
+                            <rect x="30" y="50" width="50" height="70" rx="6" fill="none" stroke="#22C55E"
+                                stroke-width="2" />
+                            <line x1="42" y1="72" x2="62" y2="72" stroke="#F1F5F9" stroke-width="2" />
+                            <line x1="52" y1="62" x2="52" y2="82" stroke="#F1F5F9" stroke-width="2" />
+                            <line x1="42" y1="100" x2="62" y2="100" stroke="#F1F5F9" stroke-width="2" />
+                            <text x="55" y="47" text-anchor="middle" fill="#22C55E" font-size="11" font-family="Sarabun"
+                                font-weight="600">9V</text>
+                        </g>
 
-                        <!-- LED -->
-                        <circle id="led-circle" cx="340" cy="200" r="18" fill="#374151" stroke="#4B5563" stroke-width="2"/>
-                        <text x="340" y="205" text-anchor="middle" fill="#94A3B8" font-size="11" font-weight="600" font-family="Sarabun" id="led-text">LED</text>
+                        <!-- Switch graphic -->
+                        <g id="placed-switch" class="hidden">
+                            <circle cx="160" cy="80" r="4" fill="#22C55E" />
+                            <line id="switch-arm" x1="160" y1="80" x2="230" y2="60" stroke="#22C55E" stroke-width="3"
+                                stroke-linecap="round" />
+                            <circle cx="240" cy="80" r="4" fill="#22C55E" />
+                            <text id="switch-label" x="195" y="65" text-anchor="middle" fill="#94A3B8" font-size="10"
+                                font-family="Sarabun">Switch (เปิด)</text>
+                        </g>
 
-                        <!-- Bottom wire: LED to Battery -->
-                        <line id="wire-bottom-1" x1="340" y1="218" x2="340" y2="240" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
-                        <line id="wire-bottom-2" x1="340" y1="240" x2="60" y2="240" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
-                        <line id="wire-left" x1="60" y1="240" x2="60" y2="180" stroke="#4B5563" stroke-width="2.5" stroke-dasharray="6 4"/>
+                        <!-- Resistor graphic -->
+                        <g id="placed-resistor" class="hidden">
+                            <rect x="282" y="60" width="76" height="30" rx="5" fill="none" stroke="#F59E0B"
+                                stroke-width="2" />
+                            <text x="320" y="80" text-anchor="middle" fill="#F59E0B" font-size="11"
+                                font-family="Sarabun" font-weight="600">470Ω</text>
+                        </g>
 
-                        <!-- Labels -->
-                        <text x="160" y="90" text-anchor="middle" fill="#94A3B8" font-size="11" font-family="Sarabun" id="switch-label">Switch (เปิด)</text>
+                        <!-- LED graphic -->
+                        <g id="placed-led" class="hidden">
+                            <circle id="led-circle" cx="361" cy="209" r="22" fill="#374151" stroke="#4B5563"
+                                stroke-width="2" />
+                            <text id="led-text" x="361" y="214" text-anchor="middle" fill="#94A3B8" font-size="12"
+                                font-weight="600" font-family="Sarabun">LED</text>
+                        </g>
                     </svg>
                 </div>
 
-                <!-- Switch Button -->
+                <!-- Switch Button (disabled until all placed) -->
                 <div class="flex justify-center">
-                    <button id="switch-btn" onclick="toggleSwitch()" class="switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOff">
-                        🔴 ปิดวงจร (OFF)
+                    <button id="switch-btn" onclick="toggleSwitch()" disabled
+                        class="switch-btn w-full max-w-xs py-4 rounded-2xl text-lg font-bold text-white bg-[#374151] cursor-not-allowed opacity-50">
+                        🟢 เปิดวงจร (ON)
                     </button>
                 </div>
             </div>
 
-            <!-- RIGHT: INFO PANEL -->
+            <!-- RIGHT: COMPONENT TRAY + INFO -->
             <div class="bg-panel rounded-2xl p-6 flex flex-col gap-6">
 
-                <!-- Section 1: Current Values -->
+                <!-- Component Tray -->
                 <div>
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <span>🧰</span> อุปกรณ์ที่ต้องใช้
+                    </h2>
+                    <div class="grid grid-cols-2 gap-3" id="component-tray">
+                        <!-- Battery -->
+                        <div id="item-battery" class="comp-card bg-navy rounded-xl p-3 border border-[#334155]"
+                            draggable="true" data-component="battery">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28">
+                                    <rect x="4" y="8" width="14" height="12" rx="2" stroke="#22C55E" stroke-width="1.5"
+                                        fill="none" />
+                                    <line x1="18" y1="12" x2="22" y2="12" stroke="#22C55E" stroke-width="1.5" />
+                                    <line x1="18" y1="16" x2="22" y2="16" stroke="#22C55E" stroke-width="1.5" />
+                                    <rect x="22" y="11" width="3" height="6" rx="1" fill="#22C55E" opacity="0.5" />
+                                </svg>
+                                <span class="text-white font-bold text-sm">🔋 แบตเตอรี่</span>
+                            </div>
+                            <p class="text-xs text-[#94A3B8]">แหล่งจ่ายไฟ 9V</p>
+                        </div>
+
+                        <!-- Switch -->
+                        <div id="item-switch" class="comp-card bg-navy rounded-xl p-3 border border-[#334155]"
+                            draggable="true" data-component="switch">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28">
+                                    <circle cx="8" cy="14" r="3" stroke="#3B82F6" stroke-width="1.5" fill="none" />
+                                    <line x1="11" y1="14" x2="20" y2="8" stroke="#3B82F6" stroke-width="2"
+                                        stroke-linecap="round" />
+                                    <circle cx="20" cy="14" r="3" stroke="#3B82F6" stroke-width="1.5" fill="none" />
+                                </svg>
+                                <span class="text-white font-bold text-sm">🔘 สวิตช์</span>
+                            </div>
+                            <p class="text-xs text-[#94A3B8]">ควบคุมการไหลของกระแส</p>
+                        </div>
+
+                        <!-- Resistor -->
+                        <div id="item-resistor" class="comp-card bg-navy rounded-xl p-3 border border-[#334155]"
+                            draggable="true" data-component="resistor">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28">
+                                    <rect x="4" y="9" width="20" height="10" rx="3" stroke="#F59E0B" stroke-width="1.5"
+                                        fill="none" />
+                                    <line x1="9" y1="11" x2="9" y2="17" stroke="#F59E0B" stroke-width="1"
+                                        opacity="0.5" />
+                                    <line x1="14" y1="11" x2="14" y2="17" stroke="#F59E0B" stroke-width="1"
+                                        opacity="0.5" />
+                                    <line x1="19" y1="11" x2="19" y2="17" stroke="#F59E0B" stroke-width="1"
+                                        opacity="0.5" />
+                                </svg>
+                                <span class="text-white font-bold text-sm">⬛ ตัวต้านทาน</span>
+                            </div>
+                            <p class="text-xs text-[#94A3B8]">470Ω จำกัดกระแส</p>
+                        </div>
+
+                        <!-- LED -->
+                        <div id="item-led" class="comp-card bg-navy rounded-xl p-3 border border-[#334155]"
+                            draggable="true" data-component="led">
+                            <div class="flex items-center gap-2 mb-1">
+                                <svg width="28" height="28" viewBox="0 0 28 28">
+                                    <circle cx="14" cy="14" r="7" stroke="#22C55E" stroke-width="1.5" fill="none" />
+                                    <line x1="14" y1="10" x2="14" y2="18" stroke="#22C55E" stroke-width="1.5" />
+                                    <line x1="10" y1="14" x2="18" y2="14" stroke="#22C55E" stroke-width="1" />
+                                </svg>
+                                <span class="text-white font-bold text-sm">💡 LED</span>
+                            </div>
+                            <p class="text-xs text-[#94A3B8]">แสดงแสงเมื่อมีกระแสไหลผ่าน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progress-section">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[#94A3B8] text-sm font-semibold">วางแล้ว</span>
+                        <span id="progress-text" class="text-primary font-bold">0/4 ชิ้น</span>
+                    </div>
+                    <div class="w-full bg-navy rounded-full h-3 overflow-hidden">
+                        <div id="progress-bar" class="progress-fill h-full rounded-full bg-primary" style="width: 0%">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Panel (hidden until circuit ON) -->
+                <div id="info-panel" class="hidden fade-in">
                     <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <span class="text-accent">📊</span> ค่าวงจรปัจจุบัน
                     </h2>
@@ -175,53 +476,59 @@
                         <div class="bg-navy rounded-xl p-4 text-center">
                             <div class="text-[#94A3B8] text-sm mb-1">สถานะ LED</div>
                             <div id="led-status">
-                                <span class="inline-block bg-ledOff text-[#94A3B8] text-sm font-semibold px-3 py-1 rounded-full">● ดับ</span>
+                                <span
+                                    class="inline-block bg-ledOff text-[#94A3B8] text-sm font-semibold px-3 py-1 rounded-full">●
+                                    ดับ</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Theory -->
+                    <div class="mt-4">
+                        <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                            <span class="text-primary">📖</span> หลักการทำงาน
+                        </h2>
+                        <p class="text-[#94A3B8] text-sm leading-relaxed mb-4">
+                            วงจรไฟฟ้าประกอบด้วยแหล่งจ่ายไฟ (แบตเตอรี่) สายไฟ สวิตช์ ตัวต้านทาน และ LED
+                            เมื่อสวิตช์ปิดวงจร กระแสไฟฟ้าจะไหลผ่านตัวต้านทานไปยัง LED ทำให้ LED สว่างขึ้น
+                            ตัวต้านทานทำหน้าที่จำกัดกระแสไฟฟ้า เพื่อป้องกัน LED เสียหาย
+                            กระแสที่ไหลคำนวณได้จากกฎของโอห์ม
+                        </p>
+                        <div class="bg-navy border-2 border-primary rounded-xl py-4 px-6 text-center">
+                            <span class="text-blue-400 text-2xl font-bold">V = I × R</span>
+                            <div class="text-[#94A3B8] text-xs mt-1">I = V / R = 9 / 470 = 19.1 mA</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Section 2: Theory -->
-                <div>
-                    <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                        <span class="text-primary">📖</span> หลักการทำงาน
-                    </h2>
-                    <p class="text-[#94A3B8] text-sm leading-relaxed mb-4">
-                        วงจรไฟฟ้าประกอบด้วยแหล่งจ่ายไฟ (แบตเตอรี่) สายไฟ สวิตช์ ตัวต้านทาน และ LED
-                        เมื่อสวิตช์ปิดวงจร กระแสไฟฟ้าจะไหลผ่านตัวต้านทานไปยัง LED ทำให้ LED สว่างขึ้น
-                        ตัวต้านทานทำหน้าที่จำกัดกระแสไฟฟ้า เพื่อป้องกัน LED เสียหาย
-                        กระแสที่ไหลคำนวณได้จากกฎของโอห์ม
-                    </p>
-                    <div class="bg-navy border-2 border-primary rounded-xl py-4 px-6 text-center">
-                        <span class="text-blue-400 text-2xl font-bold">V = I × R</span>
-                        <div class="text-[#94A3B8] text-xs mt-1">I = V / R = 9 / 470 = 19.1 mA</div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Quiz (hidden initially) -->
+                <!-- Quiz Section (hidden until circuit toggled) -->
                 <div id="quiz-section" class="hidden quiz-section">
                     <h2 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                         <span class="text-accent">📝</span> แบบทดสอบ
                     </h2>
                     <div class="bg-navy rounded-xl p-4">
                         <p class="text-[#F1F5F9] font-semibold mb-4">
-                            เมื่อ Switch เปิดวงจร (ไม่มีกระแสไหล) กระแสไฟฟ้าจะเป็นอย่างไร?
+                            เมื่อ Switch ถูกเปิด(ยกขึ้น) กระแสไฟฟ้าจะเป็นอย่างไร?
                         </p>
                         <div class="flex flex-col gap-3 mb-4">
                             <label class="flex items-center gap-3 cursor-pointer group">
                                 <input type="radio" name="quiz1" value="a" class="accent-primary w-4 h-4">
-                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ก. กระแสไหลได้ปกติ</span>
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ก.
+                                    กระแสไหลได้ปกติ</span>
                             </label>
                             <label class="flex items-center gap-3 cursor-pointer group">
                                 <input type="radio" name="quiz1" value="b" class="accent-primary w-4 h-4">
-                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ข. กระแสเป็น 0 (ไม่ไหล)</span>
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ข. กระแสเป็น 0
+                                    (ไม่ไหล)</span>
                             </label>
                             <label class="flex items-center gap-3 cursor-pointer group">
                                 <input type="radio" name="quiz1" value="c" class="accent-primary w-4 h-4">
-                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ค. กระแสเพิ่มขึ้นเป็น 2 เท่า</span>
+                                <span class="text-[#94A3B8] group-hover:text-white transition-colors">ค.
+                                    กระแสเพิ่มขึ้นเป็น 2 เท่า</span>
                             </label>
                         </div>
-                        <button onclick="checkQuiz()" class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-colors">
+                        <button id="quiz-btn" onclick="checkQuiz()"
+                            class="w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-colors">
                             ตรวจคำตอบ
                         </button>
                         <div id="quiz-feedback" class="mt-3 text-center font-semibold hidden"></div>
@@ -238,10 +545,257 @@
     </footer>
 
     <script>
+        // ===== STATE =====
+        let placedCount = 0;
+        let placedComponents = {};
         let isOn = false;
         let hasToggled = false;
+        let touchDragData = null;
+        let touchGhost = null;
 
+        const componentNames = {
+            battery: 'แบตเตอรี่',
+            switch: 'สวิตช์',
+            resistor: 'ตัวต้านทาน',
+            led: 'LED'
+        };
+
+        // ===== TOAST =====
+        function showToast(message, type) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            if (type === 'success') {
+                toast.style.background = 'rgba(34, 197, 94, 0.15)';
+                toast.style.color = '#22C55E';
+                toast.style.border = '1px solid rgba(34, 197, 94, 0.3)';
+            } else {
+                toast.style.background = 'rgba(239, 68, 68, 0.15)';
+                toast.style.color = '#EF4444';
+                toast.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            }
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(function () {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 2800);
+        }
+
+        // ===== PROGRESS =====
+        function updateProgress() {
+            const text = document.getElementById('progress-text');
+            const bar = document.getElementById('progress-bar');
+            text.textContent = placedCount + '/4 ชิ้น';
+            bar.style.width = (placedCount / 4 * 100) + '%';
+
+            if (placedCount >= 4) {
+                bar.classList.remove('bg-primary');
+                bar.classList.add('bg-ledOn');
+                text.classList.remove('text-primary');
+                text.classList.add('text-ledOn');
+            }
+        }
+
+        // ===== PLACE COMPONENT =====
+        function placeComponent(componentId, zoneId) {
+            const compType = componentId.replace('item-', '');
+            const expectedZone = 'zone-' + compType;
+
+            if (zoneId !== expectedZone) {
+                // Wrong zone
+                showToast('❌ ลองคิดอีกที! ' + componentNames[compType] + ' ไม่ได้อยู่ตรงนี้', 'error');
+                const zone = document.getElementById(zoneId);
+                zone.classList.add('shake');
+                setTimeout(function () { zone.classList.remove('shake'); }, 500);
+                return false;
+            }
+
+            // Already placed?
+            if (placedComponents[compType]) return false;
+
+            // Correct zone!
+            placedComponents[compType] = true;
+            placedCount++;
+
+            // Show toast
+            showToast('✅ เก่งมากครับ! วาง' + componentNames[compType] + 'ถูกตำแหน่งแล้ว', 'success');
+
+            // Update drop zone appearance via SVG attributes (no transform/scale)
+            const zone = document.getElementById(zoneId);
+            zone.classList.add('placed');
+            zone.setAttribute('stroke', '#22C55E');
+            zone.setAttribute('stroke-width', '2');
+            zone.setAttribute('stroke-dasharray', 'none');
+            zone.setAttribute('fill', 'rgba(34,197,94,0.07)');
+
+            // Hide zone label
+            const label = document.getElementById(zoneId + '-label');
+            if (label) label.style.display = 'none';
+
+            // Show placed graphic
+            const placed = document.getElementById('placed-' + compType);
+            if (placed) placed.classList.remove('hidden');
+
+            // Disable card
+            const card = document.getElementById(componentId);
+            card.classList.add('used');
+            card.setAttribute('draggable', 'false');
+
+            // Update progress
+            updateProgress();
+
+            // Enable button if all placed
+            if (placedCount >= 4) {
+                const btn = document.getElementById('switch-btn');
+                btn.disabled = false;
+                btn.className = 'switch-btn w-full max-w-xs py-4 rounded-2xl text-lg font-bold text-white bg-ledOn cursor-pointer';
+                btn.style.opacity = '1';
+            }
+
+            return true;
+        }
+
+        // ===== HTML5 DRAG & DROP =====
+        const compCards = document.querySelectorAll('.comp-card');
+        compCards.forEach(function (card) {
+            card.addEventListener('dragstart', function (e) {
+                e.dataTransfer.setData('text/plain', card.id);
+                e.dataTransfer.effectAllowed = 'move';
+                setTimeout(function () { card.style.opacity = '0.5'; }, 0);
+            });
+            card.addEventListener('dragend', function (e) {
+                card.style.opacity = card.classList.contains('used') ? '0.3' : '1';
+            });
+        });
+
+        const dropZones = document.querySelectorAll('.drop-zone');
+        dropZones.forEach(function (zone) {
+            zone.addEventListener('dragover', function (e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (!zone.classList.contains('placed')) {
+                    zone.setAttribute('stroke', '#60A5FA');
+                    zone.setAttribute('fill', 'rgba(59,130,246,0.08)');
+                    zone.setAttribute('stroke-width', '2.5');
+                }
+            });
+            zone.addEventListener('dragleave', function (e) {
+                if (!zone.classList.contains('placed')) {
+                    zone.setAttribute('stroke', '#60A5FA');
+                    zone.setAttribute('fill', 'rgba(59,130,246,0.06)');
+                    zone.setAttribute('stroke-width', '2.5');
+                }
+            });
+            zone.addEventListener('drop', function (e) {
+                e.preventDefault();
+                if (!zone.classList.contains('placed')) {
+                    zone.setAttribute('stroke', '#60A5FA');
+                    zone.setAttribute('fill', 'rgba(59,130,246,0.06)');
+                    zone.setAttribute('stroke-width', '2.5');
+                }
+                const componentId = e.dataTransfer.getData('text/plain');
+                if (componentId) {
+                    placeComponent(componentId, zone.id);
+                }
+            });
+        });
+
+        // ===== TOUCH SUPPORT =====
+        compCards.forEach(function (card) {
+            card.addEventListener('touchstart', function (e) {
+                if (card.classList.contains('used')) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                touchDragData = card.id;
+
+                // Create visual ghost
+                touchGhost = card.cloneNode(true);
+                touchGhost.className = 'touch-ghost bg-navy rounded-xl p-3 border-2 border-primary';
+                touchGhost.style.width = card.offsetWidth + 'px';
+                touchGhost.style.left = touch.clientX + 'px';
+                touchGhost.style.top = touch.clientY + 'px';
+                document.body.appendChild(touchGhost);
+
+                card.style.opacity = '0.3';
+            }, { passive: false });
+
+            card.addEventListener('touchmove', function (e) {
+                if (!touchDragData || !touchGhost) return;
+                e.preventDefault();
+                const touch = e.touches[0];
+                touchGhost.style.left = touch.clientX + 'px';
+                touchGhost.style.top = touch.clientY + 'px';
+
+                // Highlight zone under finger
+                const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+                dropZones.forEach(function (z) {
+                    if (!z.classList.contains('placed')) {
+                        z.setAttribute('stroke', '#60A5FA');
+                        z.setAttribute('fill', 'rgba(59,130,246,0.06)');
+                        z.setAttribute('stroke-width', '2.5');
+                    }
+                });
+                if (elem && elem.classList && elem.classList.contains('drop-zone') && !elem.classList.contains('placed')) {
+                    elem.setAttribute('stroke', '#60A5FA');
+                    elem.setAttribute('fill', 'rgba(59,130,246,0.08)');
+                    elem.setAttribute('stroke-width', '2.5');
+                }
+            }, { passive: false });
+
+            card.addEventListener('touchend', function (e) {
+                if (!touchDragData) return;
+                e.preventDefault();
+
+                // Remove ghost
+                if (touchGhost && touchGhost.parentNode) {
+                    touchGhost.parentNode.removeChild(touchGhost);
+                }
+                touchGhost = null;
+
+                // Find drop zone under finger
+                const touch = e.changedTouches[0];
+                const elem = document.elementFromPoint(touch.clientX, touch.clientY);
+
+                dropZones.forEach(function (z) {
+                    if (!z.classList.contains('placed')) {
+                        z.setAttribute('stroke', '#60A5FA');
+                        z.setAttribute('fill', 'rgba(59,130,246,0.06)');
+                        z.setAttribute('stroke-width', '2.5');
+                    }
+                });
+
+                if (elem && elem.classList && elem.classList.contains('drop-zone')) {
+                    const success = placeComponent(touchDragData, elem.id);
+                    if (!success) {
+                        card.style.opacity = card.classList.contains('used') ? '0.3' : '1';
+                    }
+                } else {
+                    // Check if it's a child of a drop zone (SVG elements)
+                    let found = false;
+                    dropZones.forEach(function (zone) {
+                        const rect = zone.getBoundingClientRect();
+                        if (touch.clientX >= rect.left && touch.clientX <= rect.right &&
+                            touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+                            const success = placeComponent(touchDragData, zone.id);
+                            if (!success) {
+                                card.style.opacity = card.classList.contains('used') ? '0.3' : '1';
+                            }
+                            found = true;
+                        }
+                    });
+                    if (!found) {
+                        card.style.opacity = card.classList.contains('used') ? '0.3' : '1';
+                    }
+                }
+
+                touchDragData = null;
+            }, { passive: false });
+        });
+
+        // ===== TOGGLE SWITCH =====
         function toggleSwitch() {
+            if (placedCount < 4) return;
+
             isOn = !isOn;
             hasToggled = true;
 
@@ -253,25 +807,23 @@
             const currentDisplay = document.getElementById('current-display');
             const ledStatus = document.getElementById('led-status');
 
-            // Wire IDs
-            const wireIds = ['wire-top-1', 'wire-top-2', 'wire-right', 'wire-right-down', 'wire-bottom-1', 'wire-bottom-2', 'wire-left'];
+            const wireIds = ['wire-1', 'wire-2', 'wire-3', 'wire-4', 'wire-5', 'wire-6'];
 
             if (isOn) {
                 // ON state
-                btn.className = 'switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOn';
-                btn.textContent = '🟢 เปิดวงจร (ON)';
+                btn.className = 'switch-btn w-full max-w-xs py-4 rounded-2xl text-lg font-bold text-white bg-red-500 cursor-pointer';
+                btn.textContent = '🔴 ปิดวงจร (OFF)';
 
                 // Switch arm closed
-                switchArm.setAttribute('x2', '190');
-                switchArm.setAttribute('y2', '120');
+                switchArm.setAttribute('x2', '230');
+                switchArm.setAttribute('y2', '80');
                 switchArm.setAttribute('stroke', '#3B82F6');
                 switchLabel.textContent = 'Switch (ปิด)';
 
-                // Wires turn solid blue animated
-                wireIds.forEach(function(id) {
-                    const wire = document.getElementById(id);
+                // Wires animated blue
+                wireIds.forEach(function (id) {
+                    var wire = document.getElementById(id);
                     wire.setAttribute('stroke', '#3B82F6');
-                    wire.setAttribute('stroke-dasharray', '10 5');
                     wire.classList.add('wire-animated');
                 });
 
@@ -287,22 +839,24 @@
                 currentDisplay.className = 'text-ledOn text-2xl font-bold';
                 ledStatus.innerHTML = '<span class="inline-block bg-ledOn/20 text-ledOn text-sm font-semibold px-3 py-1 rounded-full">● ติด</span>';
 
+                // Show info panel
+                document.getElementById('info-panel').classList.remove('hidden');
+
             } else {
                 // OFF state
-                btn.className = 'switch-btn w-56 py-4 rounded-2xl text-lg font-bold text-white bg-ledOff';
-                btn.textContent = '🔴 ปิดวงจร (OFF)';
+                btn.className = 'switch-btn w-full max-w-xs py-4 rounded-2xl text-lg font-bold text-white bg-ledOn cursor-pointer';
+                btn.textContent = '🟢 เปิดวงจร (ON)';
 
                 // Switch arm open
-                switchArm.setAttribute('x2', '180');
-                switchArm.setAttribute('y2', '100');
-                switchArm.setAttribute('stroke', '#94A3B8');
+                switchArm.setAttribute('x2', '230');
+                switchArm.setAttribute('y2', '60');
+                switchArm.setAttribute('stroke', '#22C55E');
                 switchLabel.textContent = 'Switch (เปิด)';
 
-                // Wires turn dashed gray
-                wireIds.forEach(function(id) {
-                    const wire = document.getElementById(id);
+                // Wires gray
+                wireIds.forEach(function (id) {
+                    var wire = document.getElementById(id);
                     wire.setAttribute('stroke', '#4B5563');
-                    wire.setAttribute('stroke-dasharray', '6 4');
                     wire.classList.remove('wire-animated');
                 });
 
@@ -325,9 +879,10 @@
             }
         }
 
+        // ===== QUIZ =====
         function checkQuiz() {
-            const selected = document.querySelector('input[name="quiz1"]:checked');
-            const feedback = document.getElementById('quiz-feedback');
+            var selected = document.querySelector('input[name="quiz1"]:checked');
+            var feedback = document.getElementById('quiz-feedback');
             feedback.classList.remove('hidden');
 
             if (!selected) {
@@ -340,6 +895,16 @@
                 feedback.textContent = '✅ ถูกต้อง! เมื่อวงจรเปิด กระแสไฟฟ้าจะไม่สามารถไหลได้ จึงเป็น 0';
                 feedback.className = 'mt-3 text-center font-semibold text-ledOn';
                 localStorage.setItem('lab1', 'true');
+
+                // Replace check button with home button
+                var quizBtn = document.getElementById('quiz-btn');
+                if (quizBtn) {
+                    var homeBtn = document.createElement('button');
+                    homeBtn.onclick = function () { window.location.href = 'index.html'; };
+                    homeBtn.className = 'w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-all fade-in mt-3';
+                    homeBtn.textContent = '🏠 กลับไปหน้าหลัก';
+                    quizBtn.replaceWith(homeBtn);
+                }
             } else {
                 feedback.textContent = '❌ ไม่ถูกต้อง ลองคิดอีกครั้ง — เมื่อวงจรขาด กระแสจะเป็นอย่างไร?';
                 feedback.className = 'mt-3 text-center font-semibold text-red-400';
@@ -348,4 +913,5 @@
     </script>
 
 </body>
+
 </html>

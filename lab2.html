@@ -306,6 +306,15 @@
                 feedback.textContent = '✅ ถูกต้อง! ตามสูตร I = V/R เมื่อ R เพิ่มขึ้น กระแส I จะลดลง';
                 feedback.className = 'mt-3 text-center font-semibold text-ledOn';
                 localStorage.setItem('lab2', 'true');
+                // Replace the check button with a home button
+                const checkBtn = feedback.previousElementSibling;
+                if (checkBtn && checkBtn.tagName === 'BUTTON') {
+                    const homeBtn = document.createElement('button');
+                    homeBtn.onclick = function() { window.location.href = 'index.html'; };
+                    homeBtn.className = 'w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-all fade-in mt-3';
+                    homeBtn.textContent = '🏠 กลับไปหน้าหลัก';
+                    checkBtn.replaceWith(homeBtn);
+                }
             } else {
                 feedback.textContent = '❌ ไม่ถูกต้อง ลองคิดจากสูตร I = V/R เมื่อ R เพิ่ม จะเกิดอะไรขึ้น?';
                 feedback.className = 'mt-3 text-center font-semibold text-red-400';

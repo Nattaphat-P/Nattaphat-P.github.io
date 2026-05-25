@@ -384,6 +384,15 @@
 
             if (allCorrect) {
                 localStorage.setItem('lab3', 'true');
+                // Replace the check button with a home button
+                const checkBtn = document.querySelector('button[onclick="checkAllQuiz()"]');
+                if (checkBtn) {
+                    const homeBtn = document.createElement('button');
+                    homeBtn.onclick = function() { window.location.href = 'index.html'; };
+                    homeBtn.className = 'w-full bg-primary text-white font-semibold py-3 rounded-xl hover:bg-blue-600 transition-all fade-in mt-3';
+                    homeBtn.textContent = '🏠 กลับไปหน้าหลัก';
+                    checkBtn.replaceWith(homeBtn);
+                }
             }
         }
     </script>
